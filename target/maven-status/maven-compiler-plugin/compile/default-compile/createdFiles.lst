@@ -1,0 +1,9 @@
+dev\bronzylobster\starrpgravity\managers\GravityDataManager.class
+dev\bronzylobster\starrpgravity\managers\GravityManager$1.class
+dev\bronzylobster\starrpgravity\commands\SetGravityInterval.class
+dev\bronzylobster\starrpgravity\managers\GravityManager.class
+dev\bronzylobster\starrpgravity\GravityListener.class
+dev\bronzylobster\starrpgravity\StarRPGravity.class
+dev\bronzylobster\starrpgravity\commands\Gravity.class
+dev\bronzylobster\starrpgravity\commands\ResetGravity.class
+dev\bronzylobster\starrpgravity\completers\GravityCompleter.class

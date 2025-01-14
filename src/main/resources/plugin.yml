@@ -1,0 +1,21 @@
+name: StarRPGravity
+version: '${project.version}'
+main: dev.bronzylobster.starrpgravity.StarRPGravity
+api-version: '1.21'
+depend: [StarRPCore]
+authors: [BL40]
+description: Special for Fomalgaut
+permissions:
+  SRPGravity.gravity:
+    default: op
+  SRPGravity.resetgravity:
+    default: op
+  SRPGravity.setgravityinterval:
+    default: op
+commands:
+  gravity:
+    permission: SRPGravity.gravity
+  resetGravity:
+    permission: SRPGravity.resetgravity
+  setGravityInterval:
+    permission: SRPGravity.setgravityinterval

@@ -9,9 +9,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +35,7 @@ public class GravityManager {
     private int updateInterval;
     @Getter
     private double gravityThreshold;
+    private BukkitTask gravityTask;
 
     private static final double DEFAULT_GRAVITY = -0.08;
 
@@ -47,6 +51,12 @@ public class GravityManager {
     }
 
     public void applyGravity(CommandSender sender, String selector, double gravityMultiplier, long durationTicks) {
+
+        if (gravityMultiplier == 1.0) {
+            sender.sendMessage(messageManager.messageToComponent(messageManager.getPlaceholders("gravity-standard", null)));
+            return;
+        }
+
         List<Entity> entities;
         try {
             entities = Bukkit.selectEntities(sender, selector);
@@ -88,6 +98,10 @@ public class GravityManager {
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("count", String.valueOf(count));
         sender.sendMessage(messageManager.messageToComponent(messageManager.getPlaceholders("gravity-applied", placeholders)));
+
+        if (gravityTask == null || gravityTask.isCancelled()) {
+            startGravityTask();
+        }
     }
 
     public void resetGravity(CommandSender sender, UUID entityId) {
@@ -100,6 +114,10 @@ public class GravityManager {
 
             if (entity instanceof Player) {
                 ((Player) entity).sendMessage(messageManager.messageToComponent(messageManager.getPlaceholders("gravity-reset", null)));
+            }
+
+            if (customGravityPlayers.isEmpty()) {
+                cancelGravityTask();
             }
         }
     }
@@ -117,37 +135,46 @@ public class GravityManager {
     }
 
     public void startGravityTask() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                long currentTime = System.currentTimeMillis();
+        if (gravityTask == null || gravityTask.isCancelled()) {
+            gravityTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    long currentTime = System.currentTimeMillis();
 
-                for (Map.Entry<UUID, Double> entry : customGravityPlayers.entrySet()) {
-                    UUID entityId = entry.getKey();
-                    double gravityMultiplier = entry.getValue();
+                    for (Map.Entry<UUID, Double> entry : customGravityPlayers.entrySet()) {
+                        UUID entityId = entry.getKey();
+                        double gravityMultiplier = entry.getValue();
 
-                    if (gravityExpiryTimes.containsKey(entityId) && gravityExpiryTimes.get(entityId) <= currentTime) {
-                        resetGravity(null, entityId);
-                        continue;
-                    }
-
-                    Entity entity = Bukkit.getEntity(entityId);
-                    if (entity != null && entity.isValid()) {
-                        if (entity.isOnGround()) {
-                            Vector currentVelocity = entity.getVelocity();
-                            entity.setVelocity(new Vector(currentVelocity.getX(), 0, currentVelocity.getZ()));
-                        } else {
-                            Vector currentVelocity = entity.getVelocity();
-                            Vector newVelocity = currentVelocity.add(new Vector(0, DEFAULT_GRAVITY * gravityMultiplier, 0));
-                            entity.setVelocity(newVelocity);
+                        if (gravityExpiryTimes.containsKey(entityId) && gravityExpiryTimes.get(entityId) <= currentTime) {
+                            resetGravity(null, entityId);
+                            continue;
                         }
-                    } else {
-                        customGravityPlayers.remove(entityId);
-                        gravityExpiryTimes.remove(entityId);
+
+                        Entity entity = Bukkit.getEntity(entityId);
+                        if (entity != null && entity.isValid()) {
+                            if (entity.isOnGround()) {
+                                Vector currentVelocity = entity.getVelocity();
+                                entity.setVelocity(new Vector(currentVelocity.getX(), 0, currentVelocity.getZ()));
+                            } else {
+                                Vector currentVelocity = entity.getVelocity();
+                                Vector newVelocity = currentVelocity.add(new Vector(0, DEFAULT_GRAVITY * gravityMultiplier, 0));
+                                entity.setVelocity(newVelocity);
+                            }
+                        } else {
+                            customGravityPlayers.remove(entityId);
+                            gravityExpiryTimes.remove(entityId);
+                        }
                     }
                 }
-            }
-        }.runTaskTimer(plugin, 0L, updateInterval);
+            }.runTaskTimer(plugin, 0L, updateInterval);
+        }
+    }
+
+    public void cancelGravityTask() {
+        if (gravityTask != null && !gravityTask.isCancelled()) {
+            gravityTask.cancel();
+            gravityTask = null;
+        }
     }
 
     private String formatTime(long ticks) {

@@ -21,3 +21,5 @@ messages:
   invalid-usage: "&cИспользование: /gravity <селектор> <коэффициент гравитации> [время]"
   invalid-interval: "&cИнтервал должен быть больше 0."
   gravity-multiplier: "<коэффициент гравитации>"
+  gravity-standard: "&aГравитация уже стандартная. Ничего не изменено."
+  gravity-applied: "&aГравитация применена к &e%count% &асущностям."
